@@ -47,7 +47,7 @@ function App() {
       //Nombre del usuario
       clUsuario: 'osierra',
       //No de notificaciones mostradas en el avatar del usuario 
-      noNotificaciones: 1,
+      noNotificaciones: 5,
       //Opciones deplegadas al dar clic en el avatar
       oOpcionesMenu: [
         {
