@@ -48,131 +48,12 @@ export const PnlGeneradorDeListas = () => {
             cantidadAlumnos,
         };
 
-
-
-
-
-
-
-
-        pdfMake.vfs = pdfFonts.pdfMake.vfs;
-
-        const documentDefinition = {
-            pageSize: 'Letter', // Establecer el tamaño de la hoja a Carta
-            pageOrientation: 'landscape', // Establecer la orientación de la página a horizontal
-            content: [
-                {
-                    table: {
-                        widths: ['*', 'auto'], // La primera columna ocupa todo el ancho, la segunda se ajusta al contenido
-                        body: [
-                            [
-                                {
-                                    text: [
-                                        { text: 'Materia: ', bold: true, fontSize: 12 },
-                                        { text: pdfData.nombreMateria, fontSize: 12 }
-                                    ],
-                                    margin: [0, 1] // Margen superior e inferior
-                                },
-                                {
-                                    text: [
-                                        { text: 'Periodo: ', bold: true, fontSize: 12 },
-                                        { text: pdfData.nombrePeriodo, fontSize: 12 }
-                                    ],
-                                    margin: [0, 1], // Margen superior e inferior
-                                    alignment: 'right' // Alinear a la derecha
-                                }
-                            ],
-                            [
-                                {
-                                    text: [
-                                        { text: 'Profesor: ', bold: true, fontSize: 12 },
-                                        { text: pdfData.nombreDocente, fontSize: 12 }
-                                    ],
-                                    margin: [0, 1] // Margen superior e inferior
-                                },
-                                {
-                                    text: [
-                                        { text: 'Grupo: ', bold: true, fontSize: 12 },
-                                        { text: pdfData.nombreGrupo, fontSize: 12 }
-                                    ],
-                                    margin: [0, 1], // Margen superior e inferior
-                                    alignment: 'right' // Alinear a la derecha
-                                }
-                            ]
-                        ]
-                    },
-                    layout: 'noBorders' // Sin bordes para que no se vea la tabla
-                },
-                // Añadido margen arriba de la tabla de alumnos
-                { text: '', margin: [0, 10] }, // Margen superior de 10
-
-                {
-                    style: 'tableExample',
-                    table: {
-                        headerRows: 1,
-                        widths: [15, 310, '*', '*', '*', '*', '*', '*'], // Ancho para cada columna
-                        body: [
-                            [
-                                { text: '#', style: 'headerCell' },
-                                { text: 'Alumno', style: 'headerCell' },
-                                { text: '23', style: 'headerCell', fillColor: '#FFCC00' },
-                                { text: '23', style: 'headerCell', fillColor: '#FFCC00' },
-                                { text: '24', style: 'headerCell', fillColor: '#FFCC00' },
-                                { text: '24', style: 'headerCell', fillColor: '#FFCC00' },
-                                { text: '25', style: 'headerCell', fillColor: '#FFCC00' },
-                                { text: '25', style: 'headerCell', fillColor: '#FFCC00' },
-                            ],
-                            [{ text: '1', alignment: 'center', fontSize: 10 }, { text: '' }, { text: '' }, { text: '' }, { text: '' }, { text: '' }, { text: '' }, { text: '' }],
-                        ],
-                    },
-                    layout: {
-                        hLineWidth: function (i, node) {
-                            return 1;
-                        },
-                        vLineWidth: function (i, node) {
-                            return 1;
-                        },
-                        hLineColor: function (i, node) {
-                            return '#000000';
-                        },
-                        vLineColor: function (i, node) {
-                            return '#000000';
-                        },
-                        paddingLeft: function (i, node) { return 4; },
-                        paddingRight: function (i, node) { return 4; },
-                        paddingTop: function (i, node) { return 4; },
-                        paddingBottom: function (i, node) { return 4; }
-                    }
-                },
-
-                { text: '', pageBreak: 'before' },
-            ],
-            styles: {
-                header: {
-                    fontSize: 18,
-                    bold: true,
-                    margin: [0, 20, 0, 20]
-                },
-                tableExample: {
-                    margin: [0, 5, 0, 15]
-                },
-                headerCell: {
-                    bold: true,
-                    alignment: 'center',
-                    fontSize: 12,
-                    margin: [0, 0]
-                },
-            }
-        };
-
-
         const fechaPeriodo = pdfData.feInicioFin.map(item => formatDate(item.$d));
         const Vacaciones = pdfData.rangoVacaciones.map(item => formatDate(item.$d))
         const diasNoClases = pdfData.diasInhabiles;
         const fechaParcial1 = pdfData.parcial1.map(item => formatDate(item.$d));
         const fechaParcial2 = pdfData.parcial2.map(item => formatDate(item.$d));
         const fechaParcial3 = pdfData.parcial3.map(item => formatDate(item.$d));
-
 
         // Convertir las fechas a objetos Date
         const inicioPeriodo = convertirADate(fechaPeriodo[0]);
@@ -203,7 +84,6 @@ export const PnlGeneradorDeListas = () => {
 
         const diasDeClasesEnFechas = todasLasFechas.filter(fecha => {
             const diaSemana = fecha.toLocaleString('es-ES', { weekday: 'long' }); // Obtener el nombre del día en español
-            console.log(diaSemana)
             return diasDeClases.includes(diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1)); // Comparar con los días filtrados
         });
 
@@ -245,19 +125,38 @@ export const PnlGeneradorDeListas = () => {
 
         // Agrupar fechas por parcial 
         diasHabilitados.forEach(fechaClase => {
+            const diaSemana = obtenerDiaSemana(fechaClase);
+            const horasClase = diasFiltrados[diaSemana] || 0;
+            let parcial;
+
+            // Clasificar la fecha en el parcial correspondiente
             if (fechaClase >= inicioParcial1 && fechaClase <= finParcial1) {
-                agrupacionPorParciales.parcial1.push(fechaClase);
+                parcial = 'parcial1';
             } else if (fechaClase >= inicioParcial2 && fechaClase <= finParcial2) {
-                agrupacionPorParciales.parcial2.push(fechaClase);
+                parcial = 'parcial2';
             } else if (fechaClase >= inicioParcial3 && fechaClase <= finParcial3) {
-                agrupacionPorParciales.parcial3.push(fechaClase);
+                parcial = 'parcial3';
+            }
+
+            // Si la fecha pertenece a algún parcial, duplicarla según las horas de clase
+            if (parcial) {
+                for (let i = 0; i < horasClase; i++) {
+                    agrupacionPorParciales[parcial].push(fechaClase);
+                }
             }
         });
 
-        console.log(diasDeClasesEnFechas);
-        console.log(diasNoClasesFormateados);
-        console.log(diasHabilitados);
-        console.log ("Parciales",agrupacionPorParciales);
+        const fechasFinales = convertirFechasTexto(agrupacionPorParciales);
+        const fechasCombinadas = [];
+
+        // Iterar sobre cada parcial y agregar las fechas al nuevo array con su referencia
+        for (const [parcial, fechasArray] of Object.entries(fechasFinales)) {
+            fechasArray.forEach(fecha => {
+                fechasCombinadas.push({ fecha, parcial });
+            });
+        }
+
+        generacionPDF(fechasCombinadas, pdfData)
 
 
     };
@@ -890,4 +789,165 @@ function obtenerFechasEnPeriodo(inicio, fin) {
     }
 
     return fechas;
+}
+
+
+    
+function generacionPDF(fechasFinales, datosExtra) {
+    console.log(fechasFinales);
+    console.log(datosExtra.nombreGrupo);
+
+    const gruposDeDiez = segmentarDatos(fechasFinales, 10);
+    console.log(gruposDeDiez);
+
+    pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+    const colores = {
+        'parcial1': '#FFCC00',
+        'parcial2': '#CCFF00',
+        'parcial3': '#00CCFF'
+    };
+    
+    const documentDefinition = {
+        pageSize: 'Letter',
+        pageOrientation: 'landscape',
+        content: [
+            // Agregar tablas dinámicamente
+            ...gruposDeDiez.flatMap((grupo, index) => [
+                {
+                    // Tabla de encabezado
+                    table: {
+                        widths: ['*', 'auto'],
+                        body: [
+                            [
+                                {
+                                    text: [
+                                        { text: 'Materia: ', bold: true, fontSize: 12 },
+                                        { text: datosExtra.nombreMateria, fontSize: 12 }
+                                    ],
+                                    margin: [0, 1]
+                                },
+                                {
+                                    text: [
+                                        { text: 'Periodo: ', bold: true, fontSize: 12 },
+                                        { text: datosExtra.nombrePeriodo, fontSize: 12 }
+                                    ],
+                                    margin: [0, 1],
+                                    alignment: 'right'
+                                }
+                            ],
+                            [
+                                {
+                                    text: [
+                                        { text: 'Docente: ', bold: true, fontSize: 12 },
+                                        { text: datosExtra.nombreDocente, fontSize: 12 }
+                                    ],
+                                    margin: [0, 1]
+                                },
+                                {
+                                    text: [
+                                        { text: 'Grupo: ', bold: true, fontSize: 12 },
+                                        { text: datosExtra.nombreGrupo, fontSize: 12 }
+                                    ],
+                                    margin: [0, 1],
+                                    alignment: 'right'
+                                }
+                            ]
+                        ]
+                    },
+                    layout: 'noBorders'
+                },
+
+                {
+                    text: '', // Texto vacío
+                    margin: [0, 8] // Margen superior e inferior para crear espacio
+                },
+
+                {
+                    // Tabla de asistencia
+                    style: 'tableExample',
+                    table: {
+                        headerRows: 1,
+                        widths: [15, 250, ...grupo.map(() => 35)], // Ancho fijo para # y Alumno, columnas dinámicas para fechas
+                        body: [
+                            // Encabezados de la tabla
+                            [
+                                { text: '#', bold: true, alignment: 'center' },
+                                { text: 'Alumno', bold: true, alignment: 'center' },
+                                ...grupo.map(item => ({
+                                    text: item.fecha,
+                                    fillColor: colores[item.parcial], // Color dinámico basado en el parcial
+                                    bold: true,
+                                    alignment: 'center'
+                                }))
+                            ],
+                            // Agregar filas de alumnos
+                            ...Array.from({ length: datosExtra.cantidadAlumnos }, (_, i) => [
+                                { text: (i + 1).toString(), alignment: 'center' }, // Número del alumno
+                                { text: " ", alignment: 'left' }, // Nombre del alumno (puedes cambiar esto según tus datos)
+                                ...grupo.map(() => ({ text: '', alignment: 'center' })) // Celdas vacías para las fechas
+                            ])
+                        ]
+                    },
+                    layout: {
+                        hLineWidth(i) { return i === 0 ? 2 : 1; }, // Grosor de la línea horizontal
+                        vLineWidth() { return 1; }, // Grosor de la línea vertical
+                        hLineColor() { return '#000000'; }, // Color de la línea horizontal
+                        vLineColor() { return '#000000'; }, // Color de la línea vertical
+                        paddingLeft() { return 4; },
+                        paddingRight() { return 4; },
+                        paddingTop() { return 4; },
+                        paddingBottom() { return 4; }
+                    }
+                },
+                // Solo agregar salto de página si no es la última tabla y no hay 19 filas
+                ...(index < gruposDeDiez.length - 1 && datosExtra.cantidadAlumnos !== 19 ? [{ text: '', pageBreak: 'before' }] : [])
+            ])
+        ],
+        styles: {
+            header: {
+                fontSize: 18,
+                bold: true,
+                margin: [0, 20, 0, 20]
+            },
+            tableExample: {
+                margin: [0, 5, 0, 15]
+            }
+        }
+    };
+
+    let nombreArchivo = `ListaDeAsistencia-${datosExtra.nombreMateria.replace(/\s+/g, '')}-(${datosExtra.nombreGrupo})`;
+    pdfMake.createPdf(documentDefinition).download(nombreArchivo);
+}
+
+
+function obtenerDiaSemana(fecha) {
+    const diaSemana = fecha.toLocaleDateString('es-ES', { weekday: 'long' });
+    return diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
+}
+
+function formatearFecha(fecha) {
+    const dia = fecha.getDate().toString().padStart(2, '0'); // Agregar ceros si el día es de un solo dígito
+    const mes = (fecha.getMonth() + 1).toString().padStart(2, '0'); // Meses empiezan desde 0, así que se suma 1
+    return `${dia}/${mes}`;
+}
+
+// Filtrar el arreglo y convertir las fechas a formato dd/mm
+function convertirFechasTexto(agrupacion) {
+    const resultado = {};
+    Object.keys(agrupacion).forEach(parcial => {
+        resultado[parcial] = agrupacion[parcial].map(fecha => formatearFecha(fecha));
+    });
+    return resultado;
+}
+
+function segmentarDatos(data, tamañoGrupo) {
+    const resultado = [];
+
+    for (let i = 0; i < data.length; i += tamañoGrupo) {
+        const grupo = data.slice(i, i + tamañoGrupo);
+        resultado.push(grupo);
+    }
+
+    return resultado;
 }
